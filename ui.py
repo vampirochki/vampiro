@@ -92,6 +92,15 @@ def show_note():
     print(key)
 
 
+def add_note():
+    note_name, ok = QInputDialog.getText(notes_win, "Додати замітку", "назва замітки")
+    if ok and note_name:
+        list_notes.addItem(note_name)
+        notes[note_name] = ("текст", "","теги": [])
+        list_tags.additem = notes[note_name]["теги"]
+        print("after add note", notes)
+
+
 # запуск програми
 notes_win.show()
 
