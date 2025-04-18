@@ -101,15 +101,20 @@ def add_note():
         print("after add note", notes)
 
 
-# запуск програми
-notes_win.show()
-
-
-with open("notes_data.json", "r", encoding="utf-8") as file:
-    notes = json.load(file)
-    print(f"notes onload {notes}")
-list_notes.addItems(notes)
-
+def del_note():
+    if list_notes.selectedItems():
+        note_name = list_notes.selectedItems()[0].text()
+        notes.pop(note_name, None)
+        with open("notes_data.json", "w", encoding="utf-8") as file:
+            json.dump(notes, file, ensure_ascii=False, indent=4)
+        list_notes.clear()
+        list_notes.addItems(notes)
+        list_tags.clear()
+        field_text.clear()
+        with open("notes_data.json", "r", encoding="utf-8") as file:
+        notes = json.load(file)
+        print(f"notes onload {notes}")
+        list_notes.addItems(notes)
 
 
 
