@@ -96,8 +96,8 @@ def add_note():
     note_name, ok = QInputDialog.getText(notes_win, "Додати замітку", "назва замітки")
     if ok and note_name:
         list_notes.addItem(note_name)
-        notes[note_name] = ("текст", "","теги": [])
-        list_tags.additem = notes[note_name]["теги"]
+        notes[note_name] = {"текст": "", "теги": []}
+        list_tags.addItems(notes[note_name]["теги"])
         print("after add note", notes)
 
 
@@ -116,6 +116,33 @@ def del_note():
         print(f"notes onload {notes}")
         list_notes.addItems(notes)
 
+
+def add_tag():
+    if list_notes.selectedItems():
+        note_name = list_notes.selectedItems()[0].text()
+        tag = field_tag.text()
+        if tag and tag not in notes[note_name]["теги"]:
+            notes[note_name]["теги"].append(tag)
+            list_tags.addItem(tag)
+            field_tag.clear()
+
+
+            with open("notes_data.json", "w", encoding="utf-8") as file:
+                json.dump(notes, file, ensure_ascii=False, indent=4)
+
+
+def del_tag():
+    if list_notes.selectedItems() and list_tags.selectedItems():
+        note_name = list_notes.selectedItems()[0].text()
+        tag = list_tags.selectedItems()[0].text()
+        if tag in notes[note_name]["теги"]:
+            notes[note_name]["теги"].remove(tag)
+
+            list_tags.clear()
+            list_tags.addItems(notes[note_name]["теги"])
+
+            with open("notes_data.json", "w", encoding="utf-8") as file:
+                json.dump(notes, file, ensure_ascii=False, indent=4)
 
 
 app.exec_()
