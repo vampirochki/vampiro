@@ -1,9 +1,12 @@
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLabel, QListWidget, QLineEdit, QTextEdit, QInputDialog, QHBoxLayout, QVBoxLayout
+from PyQt5.QtWidgets import (
+    QApplication, QWidget, QPushButton, QLabel, QListWidget,
+    QLineEdit, QTextEdit, QInputDialog, QHBoxLayout, QVBoxLayout, QMessageBox
+)
 import json
 import os
 
-# Проверка существования файла и загрузка данных
+#Загрузка и создание файла с замітками
 if os.path.exists("notes_data.json"):
     with open("notes_data.json", "r", encoding="utf-8") as file:
         notes = json.load(file)
@@ -19,6 +22,47 @@ else:
 
 app = QApplication([])
 
+#Стиль интерфейса
+style = """
+QWidget {
+    background-color: #f3f0ff;
+}
+
+QPushButton {
+    background-color: #6c5ce7;
+    color: white;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 14px;
+    border: none;
+}
+QPushButton:hover {
+    background-color: #a29bfe;
+}
+QPushButton:pressed {
+    background-color: #4b4bff;
+}
+QLineEdit, QTextEdit {
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 4px;
+    font-size: 14px;
+}
+QListWidget {
+    background-color: #ffffff;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+}
+QLabel {
+    font-weight: bold;
+    font-size: 14px;
+}
+"""
+app.setStyleSheet(style)
+
+#Интерфейс
 notes_win = QWidget()
 notes_win.setWindowTitle('Розумні замітки')
 notes_win.resize(900, 600)
@@ -30,7 +74,7 @@ button_note_create = QPushButton('Створити замітку')
 button_note_del = QPushButton('Видалити замітку')
 button_note_save = QPushButton('Зберегти замітку')
 
-field_tag = QLineEdit('')
+field_tag = QLineEdit()
 field_tag.setPlaceholderText('Введіть тег...')
 field_text = QTextEdit()
 button_tag_add = QPushButton('Додати до замітки')
@@ -39,6 +83,7 @@ button_tag_search = QPushButton('Шукати замітки по тегу')
 list_tags = QListWidget()
 list_tags_label = QLabel('Список тегів')
 
+#Макет
 layout_notes = QHBoxLayout()
 col_1 = QVBoxLayout()
 col_1.addWidget(field_text)
@@ -73,7 +118,7 @@ layout_notes.addLayout(col_1, stretch=2)
 layout_notes.addLayout(col_2, stretch=1)
 notes_win.setLayout(layout_notes)
 
-# Показать замітку
+#Функции
 def show_note():
     if list_notes.selectedItems():
         key = list_notes.selectedItems()[0].text()
@@ -81,28 +126,23 @@ def show_note():
         list_tags.clear()
         list_tags.addItems(notes[key]["теги"])
 
-# Створення замітки
 def add_note():
     note_name, ok = QInputDialog.getText(notes_win, "Додати замітку", "Назва замітки:")
     if ok and note_name:
         notes[note_name] = {"текст": "", "теги": []}
         list_notes.addItem(note_name)
-        with open("notes_data.json", "w", encoding="utf-8") as file:
-            json.dump(notes, file, ensure_ascii=False, indent=4)
+        save_data()
 
-# Видалення замітки
 def del_note():
     if list_notes.selectedItems():
         note_name = list_notes.selectedItems()[0].text()
         notes.pop(note_name, None)
-        with open("notes_data.json", "w", encoding="utf-8") as file:
-            json.dump(notes, file, ensure_ascii=False, indent=4)
+        save_data()
         list_notes.clear()
         list_notes.addItems(notes.keys())
         list_tags.clear()
         field_text.clear()
 
-# Додавання тегу
 def add_tag():
     if list_notes.selectedItems():
         note_name = list_notes.selectedItems()[0].text()
@@ -111,10 +151,8 @@ def add_tag():
             notes[note_name]["теги"].append(tag)
             list_tags.addItem(tag)
             field_tag.clear()
-            with open("notes_data.json", "w", encoding="utf-8") as file:
-                json.dump(notes, file, ensure_ascii=False, indent=4)
+            save_data()
 
-# Видалення тегу
 def del_tag():
     if list_notes.selectedItems() and list_tags.selectedItems():
         note_name = list_notes.selectedItems()[0].text()
@@ -123,31 +161,29 @@ def del_tag():
             notes[note_name]["теги"].remove(tag)
             list_tags.clear()
             list_tags.addItems(notes[note_name]["теги"])
-            with open("notes_data.json", "w", encoding="utf-8") as file:
-                json.dump(notes, file, ensure_ascii=False, indent=4)
+            save_data()
 
-# Зберегти замітку
 def save_note():
     if list_notes.selectedItems():
         note_name = list_notes.selectedItems()[0].text()
         notes[note_name]["текст"] = field_text.toPlainText()
-        with open("notes_data.json", "w", encoding="utf-8") as file:
-            json.dump(notes, file, ensure_ascii=False, indent=4)
+        save_data()
+        QMessageBox.information(notes_win, "Збережено", f"Замітку «{note_name}» збережено!")
 
-# Пошук за тегом
 def search_tag():
     tag = field_tag.text()
     if tag:
-        filtered_notes = {}
-        for note_name, note_data in notes.items():
-            if tag in note_data["теги"]:
-                filtered_notes[note_name] = note_data
+        filtered_notes = {k: v for k, v in notes.items() if tag in v["теги"]}
         list_notes.clear()
         list_tags.clear()
         field_text.clear()
         list_notes.addItems(filtered_notes.keys())
 
-# Подключение сигналов
+def save_data():
+    with open("notes_data.json", "w", encoding="utf-8") as file:
+        json.dump(notes, file, ensure_ascii=False, indent=4)
+
+#Подключение
 list_notes.itemClicked.connect(show_note)
 button_note_create.clicked.connect(add_note)
 button_note_del.clicked.connect(del_note)
@@ -156,8 +192,9 @@ button_tag_add.clicked.connect(add_tag)
 button_tag_del.clicked.connect(del_tag)
 button_tag_search.clicked.connect(search_tag)
 
-# Показать стартовые заметки
+#Заполнение начальных данных
 list_notes.addItems(notes.keys())
-
 notes_win.show()
 app.exec_()
+
+
